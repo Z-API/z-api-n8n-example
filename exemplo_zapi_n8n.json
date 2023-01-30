@@ -1,0 +1,562 @@
+{
+  "name": "Exemplo Z-API",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Start não pode ser apagado\n\nPor isso ele fica ai no canto isolado. Não usaremos ele neste exemplo e sim o Webhook para receber as mensagens.",
+        "width": 360
+      },
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// o n8n tem um ótimo controle de credenciais,\n// mas no caso da Z-API, da forma que é construída via URL\n// não é possível utilizar esta funcionalidade,\n// por isso faremos esse tratamento por javascript\n\n// você pode utilizar os parametros como texto direto no node do http request\n// mas se tiver uma mudança de id e token da instancia ou outra coisa\n// vai ter q alterar um por um, então é melhor concentrar aqui\n\n// !!!! NÃO ESQUEÇA DE SUBSTITUIR AS VARIAVEIS ABAIXO !!!!\n// !!!! COM O ID E TOKEN CORRETO DA SUA INSTANCIA     !!!!\n\nconst idInstanceZapi = \"111111111111111111111\";\nconst tokenInstanceZapi = \"1111111111111111111\";\nconst endpointZapi = \"https://api.z-api.io/instances/\" + idInstanceZapi + \"/token/\" + tokenInstanceZapi;\nconst extensionDocument = \"pdf\";\n\n// definindo parametros que serao utilizados posteriormente no workflow\nitem.message = \"Teste de mensagem com Z-API e n8n\"\nitem.urlLink = \"https://app.z-api.io/\";\nitem.urlAudio = \"https://freetestdata.com/wp-content/uploads/2021/09/Free_Test_Data_100KB_MP3.mp3\";\nitem.urlVideo = \"https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4\";\nitem.urlImage = \"https://www.learningcontainer.com/wp-content/uploads/2020/07/Sample-JPEG-Image-File-Download-scaled.jpg\";\nitem.urlDocument = \"https://www.learningcontainer.com/wp-content/uploads/2019/09/sample-pdf-file.pdf\";\nitem.nameDocument = \"teste\"\nitem.endpointSendOptionList = endpointZapi + \"/send-option-list\";\nitem.endpointSendText = endpointZapi + \"/send-text\";\nitem.endpointSendLink = endpointZapi + \"/send-link\";\nitem.endpointSendAudio = endpointZapi + \"/send-audio\";\nitem.endpointSendVideo = endpointZapi + \"/send-video\";\nitem.endpointSendImage = endpointZapi + \"/send-image\";\nitem.endpointSendDocument = endpointZapi + \"/send-document/\" + extensionDocument;\n\n// checa se a mensagem é uma resposta de lista\n// esse atributo listResponseMessage somente vem no objeto\n// se for resposta de lista\n// essa informação é importante para o fluxo do workflow\nif ($node[\"Recebe mensagem da Z-API\"].json[\"body\"][\"listResponseMessage\"]) {\n  item.listResponse = true;\n} else {\n  item.listResponse = false;\n}\n\n// você pode usar expressões para referenciar dados e outras coisas mais\n// como por exemplo acima $node[\"nome que você deu ao node\"]\n// seguido de .json[\"nome do atributo\"]\n// consulte a documentação para mais detalhes\n\nreturn item;"
+      },
+      "name": "Constantes",
+      "type": "n8n-nodes-base.functionItem",
+      "typeVersion": 1,
+      "position": [
+        460,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zapi",
+        "options": {}
+      },
+      "name": "Recebe mensagem da Z-API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        480
+      ],
+      "webhookId": "e73970bb-fc00-446c-8edd-f51580e1beda"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$node[\"Constantes\"].json[\"endpointSendOptionList\"]}}",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{$node[\"Recebe mensagem da Z-API\"].json[\"body\"][\"phone\"]}}"
+            },
+            {
+              "name": "message",
+              "value": "={{$node[\"Monta lista\"].json[\"message\"]}}"
+            },
+            {
+              "name": "optionList",
+              "value": "={{$node[\"Monta lista\"].json[\"optionList\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Envia lista",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// alguns parametros é melhor montar com javascript,\n// facilita o entendimento e manutenção \n\n// nao confundir montagem de objetos javascript com mensagens json\n// tem diferenças, mas o n8n converte automaticamente para json\n\nitem.message = \"Teste da Z-API com o n8n\";\n\nitem.optionList = {\n  title: \"Seleciona a opção desejada para testar\",\n  buttonLabel: \"SELECIONE A OPÇÃO\",\n  options: [\n    {\n      id: \"1\",\n      description: \"Envia mensagem\",\n      title: \"send-text\"\n    },\n    {\n      id: \"2\",\n      description: \"Envia link\",\n      title: \"send-link\"\n    },\n    {\n      id: \"3\",\n      description: \"Envia audio\",\n      title: \"send-audio\"\n    },\n    {\n      id: \"4\",\n      description: \"Envia video\",\n      title: \"send-video\"\n    },\n    {\n      id: \"5\",\n      description: \"Envia imagem\",\n      title: \"send-image\"\n    },\n    {\n      id: \"6\",\n      description: \"Envia documento\",\n      title: \"send-document\"\n    },\n  ]\n}\n\nreturn item;"
+      },
+      "name": "Monta lista",
+      "type": "n8n-nodes-base.functionItem",
+      "typeVersion": 1,
+      "position": [
+        900,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$node[\"Constantes\"].json[\"listResponse\"]}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "É resposta de lista?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        680,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$node[\"Recebe mensagem da Z-API\"].json[\"body\"][\"listResponseMessage\"][\"title\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "send-text",
+              "output": 1
+            },
+            {
+              "value2": "send-link",
+              "output": 2
+            },
+            {
+              "value2": "send-audio",
+              "output": 3
+            }
+          ]
+        },
+        "fallbackOutput": 0
+      },
+      "name": "Resposta lista 1",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        900,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$node[\"Recebe mensagem da Z-API\"].json[\"body\"][\"listResponseMessage\"][\"title\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "send-video",
+              "output": 1
+            },
+            {
+              "value2": "send-image",
+              "output": 2
+            },
+            {
+              "value2": "send-document",
+              "output": 3
+            }
+          ]
+        },
+        "fallbackOutput": 0
+      },
+      "name": "Resposta lista 2",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$node[\"Constantes\"].json[\"endpointSendText\"]}}",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{$node[\"Recebe mensagem da Z-API\"].json[\"body\"][\"phone\"]}}"
+            },
+            {
+              "name": "message",
+              "value": "={{$node[\"Constantes\"].json[\"message\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Envia mensagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$node[\"Constantes\"].json[\"endpointSendLink\"]}}",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{$node[\"Recebe mensagem da Z-API\"].json[\"body\"][\"phone\"]}}"
+            },
+            {
+              "name": "linkUrl",
+              "value": "https://z-api.io"
+            },
+            {
+              "name": "message",
+              "value": "Aqui você coloca um texto sobre o site, atenção esse texto preciso ter o link que será enviado no final da mensagem! Assim: https://z-api.io"
+            },
+            {
+              "name": "image",
+              "value": "https://firebasestorage.googleapis.com/v0/b/zaap-messenger-web.appspot.com/o/logo.png?alt=media"
+            },
+            {
+              "name": "title",
+              "value": "Z-API"
+            },
+            {
+              "name": "linkDescription",
+              "value": "Integração com o whatsapp"
+            }
+          ]
+        }
+      },
+      "name": "Envia link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$node[\"Constantes\"].json[\"endpointSendAudio\"]}}",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{$node[\"Recebe mensagem da Z-API\"].json[\"body\"][\"phone\"]}}"
+            },
+            {
+              "name": "audio",
+              "value": "={{$node[\"Constantes\"].json[\"urlAudio\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Envia audio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$node[\"Constantes\"].json[\"endpointSendVideo\"]}}",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{$node[\"Recebe mensagem da Z-API\"].json[\"body\"][\"phone\"]}}"
+            },
+            {
+              "name": "video",
+              "value": "={{$node[\"Constantes\"].json[\"urlVideo\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Envia video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$node[\"Constantes\"].json[\"endpointSendImage\"]}}",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{$node[\"Recebe mensagem da Z-API\"].json[\"body\"][\"phone\"]}}"
+            },
+            {
+              "name": "image",
+              "value": "={{$node[\"Constantes\"].json[\"urlImage\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Envia imagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$node[\"Constantes\"].json[\"endpointSendDocument\"]}}",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "phone",
+              "value": "={{$node[\"Recebe mensagem da Z-API\"].json[\"body\"][\"phone\"]}}"
+            },
+            {
+              "name": "document",
+              "value": "={{$node[\"Constantes\"].json[\"urlDocument\"]}}"
+            },
+            {
+              "name": "fileName",
+              "value": "={{$node[\"Constantes\"].json[\"nameDocument\"]}}"
+            }
+          ]
+        }
+      },
+      "name": "Envia documento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        -20
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Node Webhook\n\nTudo começa aqui. Este é o node de **Webhook** onde você deve configurar o endpoint dado aqui pelo próprio node e colocar ele na parte de webhook **Ao receber** da Z-API\n\nRepare que durante a execução de testes, o webhook é **Test URL**, e com o workflow ativo é o **Production URL**, se atente a isso.",
+        "height": 320,
+        "width": 360
+      },
+      "name": "Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Worfklow Exemplo Z-API\n\nAqui é demonstrado de forma simples o recebimento de mensagens além do envio de lista, mensagem, audio, video, imagem e documento.\n\nO fluxo poderia ter sido feito de forma mais eficaz, mas tentei deixar o mais simples possível pois o objetivo é que um leigo consiga entender o funcionamento básico.\n\nOutros comentários foram adicionados no código dos nodes **Function Item** que estão com os nomes de **Constantes** e **Monta lista**\n\nWorkflow desenvolvido por **Kim Tiago Baptista**\n\nPara consultoria em **n8n** envie um email para kimtiago@gmail.com\n\n \n[Meu GitHub](https://github.com/kimtiago)\n[Meu LinkedIn](https://www.linkedin.com/in/kimtiagobaptista/)\n",
+        "height": 380,
+        "width": 760
+      },
+      "name": "Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## O n8n\nO **n8n** é uma ferramenta de **Low-Code**, ou seja, você consegue fazer muita coisa sem programar, mas não tudo. Para utilizar você vai precisar de um conhecimento prévio de **Lógica de Programação** e **APIs**.\n\nTem integração nativa com diversas APIs do mercado. Consulte a documentação para mais detalhes.",
+        "height": 260,
+        "width": 360
+      },
+      "name": "Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Node Switch\n\nPara cada resposta que o cliente enviar será encaminhado para uma determinada rota. Ele sabe para qual rota enviar baseado nas configurações que você realiza nele.",
+        "height": 180,
+        "width": 360
+      },
+      "name": "Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Node HTTP Request\n\nSão esses nodes que fazem as chamadas aos endpoints da **Z-API** de acordo com a documentação.",
+        "width": 360
+      },
+      "name": "Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Node Function Item\n\nEsses nodes permitem você a manipular os dados com código **JavaScript**.",
+        "width": 260
+      },
+      "name": "Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        380,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Node If\n\nDiferente do node **Swtich** que tem até 4 rotas, o **If** somente tem duas.\n\nUsamos ele aqui para definir se é a resposta de uma lista ou não.",
+        "height": 180,
+        "width": 260
+      },
+      "name": "Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        860,
+        440
+      ]
+    }
+  ],
+  "connections": {
+    "Recebe mensagem da Z-API": {
+      "main": [
+        [
+          {
+            "node": "Constantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Constantes": {
+      "main": [
+        [
+          {
+            "node": "É resposta de lista?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta lista": {
+      "main": [
+        [
+          {
+            "node": "Envia lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É resposta de lista?": {
+      "main": [
+        [
+          {
+            "node": "Resposta lista 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Monta lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta lista 1": {
+      "main": [
+        [
+          {
+            "node": "Resposta lista 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Envia mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Envia link",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Envia audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta lista 2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Envia video",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Envia imagem",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Envia documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": 16
+}
