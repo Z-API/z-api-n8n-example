@@ -8,8 +8,8 @@ Este repositório é um exemplo do n8n integrado ao Z-API.
 - Baixe o arquivo exemplo_zapi_n8n.json deste repositório
 - Abra seu n8n e clique no Menu "Workflows"
 - Encontre a opção de "Import from File"
-- Após a importação, abra o node "constantes" e subistitua para suas informações.
-- No primeiro node, obtenha a URL do seu webhook e configure em sua instância.
+- Após a importação, abra o node "constantes" e substitua com as suas informações.
+- No primeiro node, obtenha a URL do webhook e configure em sua instância no Z-API.
 
 ## Créditos
 
